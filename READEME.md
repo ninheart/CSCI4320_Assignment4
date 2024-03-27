@@ -1,1 +1,1 @@
-Parallele computing assignment 4
+Parallel computing assignment 4
