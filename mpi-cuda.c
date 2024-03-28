@@ -21,10 +21,10 @@ extern void HL_kernelLaunch( unsigned char** d_data, unsigned char** d_resultDat
 extern void freeCudaArrays(int myrank);
 
 // ----- SWAP POINTER FUNCTIONS ----- //
-static inline void HL_swapPointers( unsigned char **pA, unsigned char **pB)
+static inline void HL_swapPointers( void **pA, void **pB)
 {
     // Create temporary holder to hold A's values
-    unsigned char *temporary;
+    void *temporary;
     temporary = *pA;
 
     // Perform the swap
@@ -36,15 +36,17 @@ static inline void HL_swapPointers( unsigned char **pA, unsigned char **pB)
 // extern void runCudaLand( int myrank );
 
 int main(int argc, char** argv) {
-
-
 	unsigned int pattern = 0;
 	unsigned int worldSize = 0;
 	unsigned int iterations = 0;
 	unsigned int thread_count = 0;
 
-	MPI_Status stat;
-	MPI_Request send_request, recv_request;
+	pattern = atoi(argv[1]);
+	worldSize = atoi(argv[2]);
+	iterations = atoi(argv[3]);
+	thread_count = atoi(argv[4]);
+
+	// setput MPI
 	MPI_Init(&argc, &argv);
 
 	// Get the number of processes
@@ -54,12 +56,6 @@ int main(int argc, char** argv) {
 	// Get the rank of the process
 	int myrank;
 	MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
-
-
-	pattern = atoi(argv[1]);
-	worldSize = atoi(argv[2]);
-	iterations = atoi(argv[3]);
-	thread_count = atoi(argv[4]);
 
 	int block_count = (worldSize * worldSize) / thread_count;
 
@@ -76,23 +72,23 @@ int main(int argc, char** argv) {
 	int tag1 = 10;
 	int tag2 = 20;
 
-	MPI_Barrier( MPI_COMM_WORLD );
+	MPI_Status stat;
+	MPI_Request send_request_above, recv_request_above, send_request_below, recv_request_below;
 
 	for(int tick = 0; tick < iterations; ++tick) {
-		MPI_Irecv(g_belowRow, worldSize, MPI_UNSIGNED_CHAR, aboveRank, tag1, MPI_COMM_WORLD, &recv_request);
-		MPI_Isend(g_belowRow, worldSize, MPI_UNSIGNED_CHAR, belowRank, tag1, MPI_COMM_WORLD, &send_request);
+		// recieve requests for above and below rows
+		MPI_Irecv(g_belowRow, worldSize, MPI_UNSIGNED_CHAR, aboveRank, tag1, MPI_COMM_WORLD, &recv_request_below);
+		MPI_Irecv(g_aboveRow, worldSize, MPI_UNSIGNED_CHAR, belowRank, tag2, MPI_COMM_WORLD, &recv_request_above);
 
-		// Barrier
-		MPI_Wait(&send_request, &stat);
-		MPI_Wait(&recv_request, &stat);
+		// sends for above and below rows
+		MPI_Isend(g_belowRow, worldSize, MPI_UNSIGNED_CHAR, belowRank, tag1, MPI_COMM_WORLD, &send_request_below);		
+		MPI_Isend(g_aboveRow, worldSize, MPI_UNSIGNED_CHAR, aboveRank, tag2, MPI_COMM_WORLD, &send_request_above);
 
-		// Send and receive to below row
-		MPI_Irecv(g_aboveRow, worldSize, MPI_UNSIGNED_CHAR, belowRank, tag2, MPI_COMM_WORLD, &recv_request);
-		MPI_Isend(g_aboveRow, worldSize, MPI_UNSIGNED_CHAR, aboveRank, tag2, MPI_COMM_WORLD, &send_request);
-
-		// Barrier
-		MPI_Wait(&send_request, &stat);
-		MPI_Wait(&recv_request, &stat);
+		// wait 
+		MPI_Wait(&send_request_below, &stat);
+		MPI_Wait(&send_request_above, &stat);
+		MPI_Wait(&recv_request_below, &stat);
+		MPI_Wait(&recv_request_above, &stat);
 
 		// SWAP THE POINTERS
 		HL_swapPointers(&g_aboveRow, &g_belowRow);
@@ -103,10 +99,9 @@ int main(int argc, char** argv) {
 
 		// Swap the global data
 		HL_swapPointers(&g_data, &g_resultData);
-
-		// Barrier
-		MPI_Barrier( MPI_COMM_WORLD );
   	}
+
+  	MPI_Barrier( MPI_COMM_WORLD );
 
 	if(myrank == 0){
 		t1 = MPI_Wtime();
@@ -115,8 +110,6 @@ int main(int argc, char** argv) {
 
 	freeCudaArrays(myrank);
 
-	MPI_Barrier( MPI_COMM_WORLD );
-
-  // Finalize the MPI environment.
-  MPI_Finalize();
+	// Finalize the MPI environment.
+	MPI_Finalize();
 }
