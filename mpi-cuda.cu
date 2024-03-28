@@ -11,169 +11,116 @@ extern unsigned char *g_resultData;
 // Current state of world. 
 extern unsigned char *g_data;
 
-// ----- SAVE RECEIVING ROWS FROM OTHER GPUS ----- //
 // "Above" row
-extern unsigned char *g_aboveRow;
+extern unsigned char *g_above_row;
 
 // "Below" row 
-extern unsigned char *g_belowRow;
+extern unsigned char *g_below_row;
 
-// "Above" row
-extern unsigned char *g_resultAboveRow;
+static inline void HL_initAllZeros( size_t worldWidth, size_t worldHeight )
+{
+    size_t g_dataLength = worldWidth * worldHeight;
 
-// "Below" row 
-extern unsigned char *g_resultBelowRow;
+    // calloc init's to all zeros
+    cudaMallocManaged( &g_data, (g_dataLength * sizeof(unsigned char)));
+    cudaMallocManaged( &g_resultData, (g_dataLength * sizeof(unsigned char))); 
 
-// ----- DECLARE KERNEL ----- //
-__global__ void HL_kernel(unsigned int worldWidth, unsigned int worldHeight);
-
-
-// Define number of Processors
-int cudaDeviceCount;
-cudaError_t cE; 
-
-
-__global__ void HL_kernel( unsigned char* d_data, unsigned char* d_resultData, unsigned char* d_aboveRow, unsigned char* d_belowRow, unsigned int worldWidth, unsigned int worldHeight){
-	size_t index;
-
-    // Loop over the threads
-    for(index = blockIdx.x * blockDim.x + threadIdx.x; index < worldWidth*worldHeight; index += blockDim.x * gridDim.x){
-
-        // Allocate space
-        int y0 = ((index + worldHeight - 1) % worldHeight) * worldWidth;
-        int y1 = index * worldWidth;
-        int y2 = ((index + 1) % worldHeight) * worldWidth;
-
-        // Get the current block and thread
-        int x;
-
-        // Loop over corresponding COLUMNS
-	        for (x = 0; x < worldWidth; ++x){
-
-            // Set current column, left column, and right column
-            int x1 = x;
-            int x0 = (x1 + worldWidth - 1) % worldWidth; 
-            int x2 = (x1 + 1) % worldWidth;
-
-            // Get the status of the current cell to determine logic of life span
-            int is_alive = d_data[x1+y1];
-
-            // Count the number of alive neighbors
-            int num_alive = 0;
-
-            // Check above and below row cases
-            if (x1+y1 < worldWidth) {
-                num_alive = d_aboveRow[x0] + d_aboveRow[x1] + d_aboveRow[x2] + d_data[x0+y1] + d_data[x2+y1] + d_data[x0+y2] + d_data[x1+y2] + d_data[x2+y2];
-            }
-            else if (x1+y1 > worldWidth*worldHeight - worldWidth - 1) {
-                num_alive = d_data[x0+y0] + d_data[x1+y0] + d_data[x2+y0] + d_data[x0+y1] + d_data[x2+y1] + d_belowRow[x0] + d_belowRow[x1] + d_belowRow[x2];
-            }
-            else {
-                num_alive = d_data[x0+y0] + d_data[x1+y0] + d_data[x2+y0] + d_data[x0+y1] + d_data[x2+y1] + d_data[x0+y2] + d_data[x1+y2] + d_data[x2+y2];
-            }
-
-            // Logic for updating values
-            if (is_alive == 1){
-                // Cell is alive!
-                if (num_alive < 2){
-                    // Underpopulated
-                    d_resultData[x1+y1] = 0;
-                }
-                else if (num_alive == 2 || num_alive == 3){
-                    // Just the right amount of neighbors
-                    d_resultData[x1+y1] = 1;
-                }
-                else {
-                    // Overpopulated
-                    d_resultData[x1+y1] = 0;
-                }
-            }
-            else {
-                // Cell is dead :(
-                if (num_alive == 3 || num_alive == 6) {
-                    // #Resurrected
-                    d_resultData[x1+y1] = 1;
-                }
-                else {
-                    // We stay dead
-                    d_resultData[x1+y1] = 0;
-                }
-            }
-	    } 
-    } 
-
-    // ----- SWAP DATA IN ABOVE ROWS AND BELOW ROWS ----- //
-    int j;
-    for(j = 0; j < worldWidth; j++){
-        d_aboveRow[j] = d_resultData[j];
-        d_belowRow[j] = d_resultData[j + worldWidth*(worldHeight - 1)];
+    size_t i = 0;
+    for (i = 0; i < g_dataLength; i++)
+    {
+        g_data[i] = 0;
+        g_resultData[i] = 0;
     }
-
-    // Synchronize the threads?
-    __syncthreads();
-
 }
 
-extern "C" void HL_initMaster( unsigned int pattern, size_t worldWidth, size_t worldHeight, int myrank, int cudaDeviceCount )
+static inline void HL_initReplicator( size_t worldWidth, size_t worldHeight )
 {
+    HL_initAllZeros(worldWidth, worldHeight);
+
+    size_t x, y;
+
+    x = worldWidth/2;
+    y = worldHeight/2;
     
-    // INITIALIZE THE CUDA WORLD
+    g_data[x + y*worldWidth + 1] = 1; 
+    g_data[x + y*worldWidth + 2] = 1;
+    g_data[x + y*worldWidth + 3] = 1;
+    g_data[x + (y+1)*worldWidth] = 1;
+    g_data[x + (y+2)*worldWidth] = 1;
+    g_data[x + (y+3)*worldWidth] = 1; 
+}
+
+__global__ void HL_kernel(const unsigned char* d_data, unsigned char* d_resultData,
+                            unsigned int worldWidth, unsigned int worldHeight)
+{
+    size_t index = blockIdx.x *blockDim.x + threadIdx.x;
+
+    for (; index < worldWidth*worldHeight; index += blockDim.x * gridDim.x)
+    {
+        // get the x and y coords from the index in the flattened world
+        size_t y = (size_t) index / worldWidth;
+
+        size_t y0 = ((y + worldHeight - 1) % worldHeight) * worldWidth;
+        size_t y1 = y * worldWidth;
+        size_t y2 = ((y + 1) % worldHeight) * worldWidth;
+
+        size_t x1 = index % worldWidth;
+
+        size_t x0 = (x1 + worldWidth - 1) % worldWidth;
+        size_t x2 = (x1 + 1) % worldWidth;
+
+        // The rest is similar to the serial code, with the adjacent cells checked
+        unsigned int aliveCells = d_data[x0 + y0] + d_data[x1 + y0] + d_data[x2 + y0]
+                                    + d_data[x0 + y1] + d_data[x2 + y1]
+                                    + d_data[x0 + y2] + d_data[x1 + y2] + d_data[x2 + y2];;
+
+        d_resultData[x1 + y1] = (aliveCells == 3) || (aliveCells == 6 && !d_data[x1 + y1])
+          || (aliveCells == 2 && d_data[x1 + y1]) ? 1 : 0;
+    }
+}
+
+extern "C" void HL_initMaster( unsigned int pattern, size_t worldWidth, size_t worldHeight, int myrank)
+{
+    // Set device
+    int cudaDeviceCount;
+    cudaError_t cE; 
     if( (cE = cudaGetDeviceCount( &cudaDeviceCount)) != cudaSuccess )
     {
-    printf(" Unable to determine cuda device count, error is %d, count is %d\n", cE, cudaDeviceCount );
-    exit(-1);
+        printf(" Unable to determine cuda device count, error is %d, count is %d\n", cE, cudaDeviceCount );
+        exit(-1);
     }
     if( (cE = cudaSetDevice( myrank % cudaDeviceCount )) != cudaSuccess )
     {
-    printf(" Unable to have myrank %d set to cuda device %d, error is %d \n", myrank, (myrank % cudaDeviceCount), cE);
-    exit(-1); 
+        printf(" Unable to have myrank %d set to cuda device %d, error is %d \n", myrank, (myrank % cudaDeviceCount), cE);
+        exit(-1); 
     }
 
-    switch(pattern)
-    {
-    case 0:
-	HL_initAllZeros( worldWidth, worldHeight, myrank, cudaDeviceCount );
-	break;
-	
-    case 1:
-	HL_initAllOnes( worldWidth, worldHeight, myrank, cudaDeviceCount  );
-	break;
-	
-    case 2:
-	HL_initOnesInMiddle( worldWidth, worldHeight, myrank, cudaDeviceCount  );
-	break;
-	
-    case 3:
-	HL_initOnesAtCorners( worldWidth, worldHeight, myrank, cudaDeviceCount  );
-	break;
-
-    case 4:
-	HL_initSpinnerAtCorner( worldWidth, worldHeight, myrank, cudaDeviceCount  );
-	break;
-
-    case 5:
-	HL_initReplicator( worldWidth, worldHeight, myrank, cudaDeviceCount  );
-	break;
-	
-    default:
-	printf("Pattern %u has not been implemented \n", pattern);
-	exit(-1);
-    }
+    // INITIALIZE THE CUDA WORLD
+    HL_initReplicator( worldWidth, worldHeight );
 }
 
 
-extern "C" void HL_kernelLaunch( unsigned char** d_data, unsigned char** d_resultData, unsigned char** d_aboveRow, unsigned char** d_belowRow, int block_count, int thread_count, unsigned int worldWidth, unsigned int worldHeight, int myrank){
+extern "C" void HL_kernelLaunch( unsigned char** d_data, unsigned char** d_resultData, 
+        unsigned char * next_above_row, unsigned char * next_below_row, 
+        int block_count, int thread_count, 
+        unsigned int worldWidth, unsigned int worldHeight, 
+        int myrank){
     
-    // Call the kernel
-    HL_kernel<<<block_count,thread_count>>>(*d_data, *d_resultData, *d_aboveRow, *d_belowRow, worldWidth, worldHeight);
+    // load back into device
+    cudaMemcpy(g_data, next_above_row, worldWidth, cudaMemcpyHostToDevice);
+    cudaMemcpy(g_data+worldHeight- 1, next_below_row, worldWidth, cudaMemcpyHostToDevice);
 
+    // Call the kernel
+    HL_kernel<<<block_count,thread_count>>>(*d_data, *d_resultData, worldWidth, worldHeight);
     cudaDeviceSynchronize();
+
+    //load from device to host
+    cudaMemcpy(g_above_row, g_data, worldWidth, cudaMemcpyDeviceToHost);
+    cudaMemcpy(g_below_row, g_data+worldHeight - 1, worldWidth, cudaMemcpyDeviceToHost);
 }
 
 
 extern "C" void freeCudaArrays(int myrank){
     cudaFree(g_data);
     cudaFree(g_resultData);
-    cudaFree(g_aboveRow);
-    cudaFree(g_belowRow);
 }
