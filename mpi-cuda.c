@@ -36,7 +36,7 @@ static inline void HL_swapPointers( unsigned char **pA, unsigned char **pB)
     *pB = temporary;
 }
 
-static inline void HL_printWorld(size_t iteration)
+static inline void HL_printWorld(size_t iteration, size_t g_worldWidth, size_t g_worldHeight)
 {
     int i, j;
 
@@ -134,7 +134,7 @@ int main(int argc, char** argv) {
 		printf("\n[WORLD SIZE] %d x %d\n[ITERATIONS] %d\n[EXECUTION TIME] %f\n", worldSize, worldSize, iterations, t1-t0);
 	}
 
-	HL_printWorld(iterations);
+	HL_printWorld(iterations, worldSize, worldSize);
 
 	// free cuda memory
 	freeCudaArrays(myrank);
