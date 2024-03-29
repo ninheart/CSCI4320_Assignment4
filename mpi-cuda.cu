@@ -108,7 +108,7 @@ extern "C" void HL_kernelLaunch( unsigned char** d_data, unsigned char** d_resul
     
     // load back into device
     cudaMemcpy(g_data, next_above_row, worldWidth, cudaMemcpyHostToDevice);
-    cudaMemcpy(g_data+worldHeight- 1, next_below_row, worldWidth, cudaMemcpyHostToDevice);
+    cudaMemcpy(g_data+(worldHeight- 1) * worldWidth, next_below_row, worldWidth, cudaMemcpyHostToDevice);
 
     // Call the kernel
     HL_kernel<<<block_count,thread_count>>>(*d_data, *d_resultData, worldWidth, worldHeight);
@@ -116,7 +116,7 @@ extern "C" void HL_kernelLaunch( unsigned char** d_data, unsigned char** d_resul
 
     //load from device to host
     cudaMemcpy(g_above_row, g_data, worldWidth, cudaMemcpyDeviceToHost);
-    cudaMemcpy(g_below_row, g_data+worldHeight - 1, worldWidth, cudaMemcpyDeviceToHost);
+    cudaMemcpy(g_below_row, g_data+(worldHeight - 1) * worldWidth, worldWidth, cudaMemcpyDeviceToHost);
 }
 
 

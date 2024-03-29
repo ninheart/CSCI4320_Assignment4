@@ -87,7 +87,7 @@ int main(int argc, char** argv) {
 
 	int block_count = (worldSize * worldSize) / thread_count;
 
-	HL_initMaster(pattern,worldSize,iterations, myrank);
+	HL_initMaster(pattern,worldSize, worldSize, myrank);
 
 	double t0, t1;
 	if(myrank == 0){
@@ -132,9 +132,10 @@ int main(int argc, char** argv) {
 	if(myrank == 0){
 		t1 = MPI_Wtime();
 		printf("\n[WORLD SIZE] %d x %d\n[ITERATIONS] %d\n[EXECUTION TIME] %f\n", worldSize, worldSize, iterations, t1-t0);
+		HL_printWorld(iterations, worldSize, worldSize);
 	}
 
-	HL_printWorld(iterations, worldSize, worldSize);
+	// HL_printWorld(iterations, worldSize, worldSize);
 
 	// free cuda memory
 	freeCudaArrays(myrank);
