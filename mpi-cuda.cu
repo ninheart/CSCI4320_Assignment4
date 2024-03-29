@@ -19,6 +19,7 @@ extern unsigned char *g_below_row;
 
 static inline void HL_initAllZeros( size_t worldWidth, size_t worldHeight )
 {
+    worldHeight += 2;
     size_t g_dataLength = worldWidth * worldHeight;
 
     // calloc init's to all zeros
@@ -40,7 +41,7 @@ static inline void HL_initReplicator( size_t worldWidth, size_t worldHeight )
     size_t x, y;
 
     x = worldWidth/2;
-    y = worldHeight/2;
+    y = worldHeight/2 + 1;
     
     g_data[x + y*worldWidth + 1] = 1; 
     g_data[x + y*worldWidth + 2] = 1;
@@ -53,16 +54,16 @@ static inline void HL_initReplicator( size_t worldWidth, size_t worldHeight )
 __global__ void HL_kernel(const unsigned char* d_data, unsigned char* d_resultData,
                             unsigned int worldWidth, unsigned int worldHeight)
 {
-    size_t index = blockIdx.x *blockDim.x + threadIdx.x;
+    size_t index = blockIdx.x *blockDim.x + threadIdx.x + worldWidth;
 
-    for (; index < worldWidth*worldHeight; index += blockDim.x * gridDim.x)
+    for (; index < worldWidth*(worldHeight + 1); index += blockDim.x * gridDim.x)
     {
         // get the x and y coords from the index in the flattened world
         size_t y = (size_t) index / worldWidth;
 
-        size_t y0 = ((y + worldHeight - 1) % worldHeight) * worldWidth;
+        size_t y0 = (y - 1) * worldWidth;
         size_t y1 = y * worldWidth;
-        size_t y2 = ((y + 1) % worldHeight) * worldWidth;
+        size_t y2 = (y + 1) * worldWidth;
 
         size_t x1 = index % worldWidth;
 
@@ -100,23 +101,36 @@ extern "C" void HL_initMaster( unsigned int pattern, size_t worldWidth, size_t w
 }
 
 
+extern "C" void get_send_ghost_rows(unsigned int worldWidth, unsigned int worldHeight)
+{
+    cudaMemcpy(g_above_row, g_data + (worldWidth), worldWidth, cudaMemcpyDeviceToHost);
+    cudaMemcpy(g_below_row, g_data+(worldHeight) * worldWidth, worldWidth, cudaMemcpyDeviceToHost);
+}
+
+extern "C" void load_ghost_rows(unsigned char * next_above_row, unsigned char * next_below_row,
+    unsigned int worldWidth, unsigned int worldHeight)
+{
+    cudaMemcpy(g_data, next_above_row, worldWidth, cudaMemcpyHostToDevice);
+    cudaMemcpy(g_data+(worldHeight + 1) * worldWidth, next_below_row, worldWidth, cudaMemcpyHostToDevice);
+}
+
 extern "C" void HL_kernelLaunch( unsigned char** d_data, unsigned char** d_resultData, 
-        unsigned char * next_above_row, unsigned char * next_below_row, 
+        // unsigned char * next_above_row, unsigned char * next_below_row, 
         int block_count, int thread_count, 
         unsigned int worldWidth, unsigned int worldHeight, 
         int myrank){
     
     // load back into device
-    cudaMemcpy(g_data, next_above_row, worldWidth, cudaMemcpyHostToDevice);
-    cudaMemcpy(g_data+(worldHeight- 1) * worldWidth, next_below_row, worldWidth, cudaMemcpyHostToDevice);
+    // cudaMemcpy(g_data, next_above_row, worldWidth, cudaMemcpyHostToDevice);
+    // cudaMemcpy(g_data+(worldHeight + 1) * worldWidth, next_below_row, worldWidth, cudaMemcpyHostToDevice);
 
     // Call the kernel
     HL_kernel<<<block_count,thread_count>>>(*d_data, *d_resultData, worldWidth, worldHeight);
     cudaDeviceSynchronize();
 
     //load from device to host
-    cudaMemcpy(g_above_row, g_data, worldWidth, cudaMemcpyDeviceToHost);
-    cudaMemcpy(g_below_row, g_data+(worldHeight - 1) * worldWidth, worldWidth, cudaMemcpyDeviceToHost);
+    // cudaMemcpy(g_above_row, g_data + (worldWidth), worldWidth, cudaMemcpyDeviceToHost);
+    // cudaMemcpy(g_below_row, g_data+(worldHeight) * worldWidth, worldWidth, cudaMemcpyDeviceToHost);
 }
 
 
