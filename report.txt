@@ -1,1 +1,25 @@
+Theodore Wu, Yifu Liu, Alexa Daigle, Espie Taylor
+Assignment 4 
+Parallel Programming 
+03/29/24 
 
+Total execution time for each run:
+1 node, 1 GPU, 16Kx16K world size each MPI rank, 128 iterations with 256 CUDA thread block size and pattern 5:
+1 node, 2 GPUs/MPI ranks, 16Kx16K world size each MPI rank, 128 iterations with 256 CUDA thread block size and pattern 5:
+1 node, 3 GPUs/MPI ranks, 16Kx16K world size each MPI rank, 128 iterations with 256 CUDA thread block size and pattern 5:
+1 node, 4 GPUs/MPI ranks, 16Kx16K world size each MPI rank, 128 iterations with 256 CUDA thread block size and pattern 5:
+1 node, 5 GPUs/MPI ranks, 16Kx16K world size each MPI rank, 128 iterations with 256 CUDA thread block size and pattern 5:
+1 node, 6 GPUs/MPI ranks, 16Kx16K world size each MPI rank, 128 iterations with 256 CUDA thread block size and pattern 5:
+2 nodes, 12 GPUs/MPI ranks, 16Kx16K world size each MPI rank, 128 iterations with 256 CUDA thread block size and pattern 5:
+
+Maximum speedup relative to using a single GPU:
+
+Configuration that yields the fastest "cells updates per second" rate: 
+
+Why this configuration was faster than others:
+
+Contributions:
+Theodore Wu:
+Yifu Liu:
+Alexa Daigle:
+Espie Taylor:
