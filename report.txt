@@ -1,4 +1,4 @@
-Theodore Wu, Yifu Liu, Alexa Daigle, Espie Taylor
+Theodore Wu, Charlie Liu, Alexa Daigle, Espie Taylor
 Assignment 4 
 Parallel Programming 
 03/29/24 
@@ -20,6 +20,6 @@ Why this configuration was faster than others:
 
 Contributions:
 Theodore Wu:
-Yifu Liu:
+Charlie Liu:
 Alexa Daigle:
 Espie Taylor:
