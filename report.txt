@@ -5,13 +5,13 @@ Parallel Programming
 
 Total execution time for each run:
 ----------------------------------
-A.) 1 node, 1 GPU, 16Kx16K world size each MPI rank, 128 iterations with 256 CUDA thread block size and pattern 5: 
-B.) 1 node, 2 GPUs/MPI ranks, 16Kx16K world size each MPI rank, 128 iterations with 256 CUDA thread block size and pattern 5:
-C.) 1 node, 3 GPUs/MPI ranks, 16Kx16K world size each MPI rank, 128 iterations with 256 CUDA thread block size and pattern 5: 
-D.) 1 node, 4 GPUs/MPI ranks, 16Kx16K world size each MPI rank, 128 iterations with 256 CUDA thread block size and pattern 5: 
-E.) 1 node, 5 GPUs/MPI ranks, 16Kx16K world size each MPI rank, 128 iterations with 256 CUDA thread block size and pattern 5: 
-F.) 1 node, 6 GPUs/MPI ranks, 16Kx16K world size each MPI rank, 128 iterations with 256 CUDA thread block size and pattern 5: 
-G.) 2 nodes, 12 GPUs/MPI ranks, 16Kx16K world size each MPI rank, 128 iterations with 256 CUDA thread block size and pattern 5: 
+A.) 1 node, 1 GPU, 16Kx16K world size each MPI rank, 128 iterations with 256 CUDA thread block size and pattern 5: 0.643961
+B.) 1 node, 2 GPUs/MPI ranks, 16Kx16K world size each MPI rank, 128 iterations with 256 CUDA thread block size and pattern 5: 0.656310
+C.) 1 node, 3 GPUs/MPI ranks, 16Kx16K world size each MPI rank, 128 iterations with 256 CUDA thread block size and pattern 5: 0.655127
+D.) 1 node, 4 GPUs/MPI ranks, 16Kx16K world size each MPI rank, 128 iterations with 256 CUDA thread block size and pattern 5: 0.646586
+E.) 1 node, 5 GPUs/MPI ranks, 16Kx16K world size each MPI rank, 128 iterations with 256 CUDA thread block size and pattern 5: 0.649848
+F.) 1 node, 6 GPUs/MPI ranks, 16Kx16K world size each MPI rank, 128 iterations with 256 CUDA thread block size and pattern 5: 0.659207
+G.) 2 nodes, 12 GPUs/MPI ranks, 16Kx16K world size each MPI rank, 128 iterations with 256 CUDA thread block size and pattern 5: 0.722893
 
 Maximum speedup relative to using a single GPU:
 -----------------------------------------------
@@ -27,27 +27,28 @@ Maximum speedup:
 Configuration that yields the fastest "cells updates per second" rate:
 ----------------------------------------------------------------------
 A.) World of 16384^2 that runs for 128 iterations with - execution time: 
-    16384^2 * 128 = 34359738368 cell updates
-    34359738368 / x = y cell updates per second
+    16384^2 * 128 = 34,359,738,368 cell updates
+    34,359,738,368 / 0.643961 = 53,356,862,244.8 cell updates per second
 B.) World of 16384^2 that runs for 128 iterations with - execution time: 
-    16384^2 * 128 = 34359738368 cell updates
-    34359738368 / x = y cell updates per second
+    16384^2 * 128 = 34,359,738,368 cell updates
+    34,359,738,368 / 0.656310 = 52,352,910,009 cell updates per second
 C.) World of 16384^2 that runs for 128 iterations with - execution time:
-    16384^2 * 128 = 34359738368 cell updates
-    34359738368 / x = y cell updates per second
+    16384^2 * 128 = 34,359,738,368 cell updates
+    34,359,738,368 / 0.655127 = 52,447,446,629.4 cell updates per second
 D.) World of 16384^2 that runs for 128 iterations with - execution time: 
-    16384^2 * 128 = 34359738368 cell updates
-    34359738368 / x = y cell updates per second
+    16384^2 * 128 = 34,359,738,368 cell updates
+    34,359,738,368 / 0.646586 = 53,140,244,867.7 cell updates per second
 E.) World of 16384^2 that runs for 128 iterations with - execution time: 
-    16384^2 * 128 = 34359738368 cell updates
-    34359738368 / x = y cell updates per second
+    16384^2 * 128 = 34,359,738,368 cell updates
+    34,359,738,368 / 0.649848 = 52,873,500,215.4 cell updates per second
 F.) World of 16384^2 that runs for 128 iterations with - execution time: 
-    16384^2 * 128 = 34359738368 cell updates
-    34359738368 / x = y cell updates per second
+    16384^2 * 128 = 34,359,738,368 cell updates
+    34,359,738,368 / 0.659207 = 52,122,836,025.7 cell updates per second
 G.) World of 16384^2 that runs for 128 iterations with - execution time:
-    16384^2 * 128 = 34359738368 cell updates
-    34359738368 / x = y cell updates per second
+    16384^2 * 128 = 34,359,738,368 cell updates
+    34,359,738,368 / 0.722893 = 47,530,877,139.5 cell updates per second
 Fastest "cells updates per second" rate: 
+1 node, 1 GPU, 16Kx16K world size each MPI rank, 128 iterations with 256 CUDA thread block size and pattern 5 with 53,356,862,244.8 cell updates per second
 
 Why this configuration was faster than others:
 ----------------------------------------------
