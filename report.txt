@@ -4,21 +4,56 @@ Parallel Programming
 03/29/24 
 
 Total execution time for each run:
-1 node, 1 GPU, 16Kx16K world size each MPI rank, 128 iterations with 256 CUDA thread block size and pattern 5:
-1 node, 2 GPUs/MPI ranks, 16Kx16K world size each MPI rank, 128 iterations with 256 CUDA thread block size and pattern 5:
-1 node, 3 GPUs/MPI ranks, 16Kx16K world size each MPI rank, 128 iterations with 256 CUDA thread block size and pattern 5:
-1 node, 4 GPUs/MPI ranks, 16Kx16K world size each MPI rank, 128 iterations with 256 CUDA thread block size and pattern 5:
-1 node, 5 GPUs/MPI ranks, 16Kx16K world size each MPI rank, 128 iterations with 256 CUDA thread block size and pattern 5:
-1 node, 6 GPUs/MPI ranks, 16Kx16K world size each MPI rank, 128 iterations with 256 CUDA thread block size and pattern 5:
-2 nodes, 12 GPUs/MPI ranks, 16Kx16K world size each MPI rank, 128 iterations with 256 CUDA thread block size and pattern 5:
+----------------------------------
+A.) 1 node, 1 GPU, 16Kx16K world size each MPI rank, 128 iterations with 256 CUDA thread block size and pattern 5: 
+B.) 1 node, 2 GPUs/MPI ranks, 16Kx16K world size each MPI rank, 128 iterations with 256 CUDA thread block size and pattern 5:
+C.) 1 node, 3 GPUs/MPI ranks, 16Kx16K world size each MPI rank, 128 iterations with 256 CUDA thread block size and pattern 5: 
+D.) 1 node, 4 GPUs/MPI ranks, 16Kx16K world size each MPI rank, 128 iterations with 256 CUDA thread block size and pattern 5: 
+E.) 1 node, 5 GPUs/MPI ranks, 16Kx16K world size each MPI rank, 128 iterations with 256 CUDA thread block size and pattern 5: 
+F.) 1 node, 6 GPUs/MPI ranks, 16Kx16K world size each MPI rank, 128 iterations with 256 CUDA thread block size and pattern 5: 
+G.) 2 nodes, 12 GPUs/MPI ranks, 16Kx16K world size each MPI rank, 128 iterations with 256 CUDA thread block size and pattern 5: 
 
 Maximum speedup relative to using a single GPU:
+-----------------------------------------------
+Time with single GPU: 
+Speedup with 2:
+Speedup with 3: 
+Speedup with 4: 
+Speedup with 5:
+Speedup with 6:
+Speedup with 12:
+Maximum speedup:
 
-Configuration that yields the fastest "cells updates per second" rate: 
+Configuration that yields the fastest "cells updates per second" rate:
+----------------------------------------------------------------------
+A.) World of 16384^2 that runs for 128 iterations with - execution time: 
+    16384^2 * 128 = 34359738368 cell updates
+    34359738368 / x = y cell updates per second
+B.) World of 16384^2 that runs for 128 iterations with - execution time: 
+    16384^2 * 128 = 34359738368 cell updates
+    34359738368 / x = y cell updates per second
+C.) World of 16384^2 that runs for 128 iterations with - execution time:
+    16384^2 * 128 = 34359738368 cell updates
+    34359738368 / x = y cell updates per second
+D.) World of 16384^2 that runs for 128 iterations with - execution time: 
+    16384^2 * 128 = 34359738368 cell updates
+    34359738368 / x = y cell updates per second
+E.) World of 16384^2 that runs for 128 iterations with - execution time: 
+    16384^2 * 128 = 34359738368 cell updates
+    34359738368 / x = y cell updates per second
+F.) World of 16384^2 that runs for 128 iterations with - execution time: 
+    16384^2 * 128 = 34359738368 cell updates
+    34359738368 / x = y cell updates per second
+G.) World of 16384^2 that runs for 128 iterations with - execution time:
+    16384^2 * 128 = 34359738368 cell updates
+    34359738368 / x = y cell updates per second
+Fastest "cells updates per second" rate: 
 
 Why this configuration was faster than others:
+----------------------------------------------
 
 Contributions:
+--------------
 Theodore Wu:
 Charlie Liu:
 Alexa Daigle:
