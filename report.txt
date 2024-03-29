@@ -54,7 +54,10 @@ Why this configuration was faster than others:
 
 Contributions:
 --------------
-Theodore Wu:
-Charlie Liu:
-Alexa Daigle:
-Espie Taylor:
+All group members engaged in a collaborative effort to review and test the C and CUDA code to ensure correctness. Additionally, all group members effectively communicated with one another in regard to dividing up work and completing various tasks in a timely manner. 
+Other individual contributions: 
+Theodore Wu: Corrections and bug fixes in code
+Charlie Liu: C and CUDA code 
+Alexa Daigle: Report and calculations 
+Espie Taylor: AIMOS runs 
+
