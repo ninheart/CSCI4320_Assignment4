@@ -19,7 +19,9 @@ extern unsigned char *g_below_row;
 
 static inline void HL_initAllZeros( size_t worldWidth, size_t worldHeight )
 {
+    // add two extra rows
     worldHeight += 2;
+
     size_t g_dataLength = worldWidth * worldHeight;
 
     // calloc init's to all zeros
@@ -32,6 +34,54 @@ static inline void HL_initAllZeros( size_t worldWidth, size_t worldHeight )
         g_data[i] = 0;
         g_resultData[i] = 0;
     }
+}
+
+static inline void HL_initAllOnes( size_t worldWidth, size_t worldHeight )
+{
+    HL_initAllZeros(worldWidth, worldHeight);
+    size_t g_dataLength = worldWidth * worldHeight;
+
+    size_t i;
+    // set all rows of world to true
+    for( i = 0; i < g_dataLength; i++)
+    {
+       g_data[i + worldWidth] = 1;
+    }
+}
+
+static inline void HL_initOnesInMiddle( size_t worldWidth, size_t worldHeight )
+{
+    HL_initAllZeros(worldWidth, worldHeight);
+
+    size_t i;
+    // set first 1 rows of world to true
+    for( i = 10*worldWidth; i < 11*worldWidth; i++)
+    {
+        if( (i >= ( 10*worldWidth + 10)) && (i < (10*worldWidth + 20)))
+        {
+            g_data[i + worldWidth] = 1;
+        }
+    }
+}
+
+static inline void HL_initOnesAtCorners( size_t worldWidth, size_t worldHeight )
+{
+    HL_initAllZeros(worldWidth, worldHeight);
+
+    g_data[0 + worldWidth] = 1; // upper left
+    g_data[worldWidth-1 + worldWidth]=1; // upper right
+    g_data[(worldHeight * (worldWidth-1)) + worldWidth]=1; // lower left
+    g_data[(worldHeight * (worldWidth-1)) + worldWidth-1 + worldWidth]=1; // lower right
+}
+
+static inline void HL_initSpinnerAtCorner( size_t worldWidth, size_t worldHeight )
+{
+    HL_initAllZeros(worldWidth, worldHeight);
+
+    g_data[worldWidth] = 1; // upper left
+    g_data[1 + worldWidth] = 1; // upper left +1
+    g_data[worldWidth-1 + worldWidth]=1; // upper right
+    
 }
 
 static inline void HL_initReplicator( size_t worldWidth, size_t worldHeight )
@@ -97,16 +147,46 @@ extern "C" void HL_initMaster( unsigned int pattern, size_t worldWidth, size_t w
     }
 
     // INITIALIZE THE CUDA WORLD
-    HL_initReplicator( worldWidth, worldHeight );
+    switch(pattern)
+    {
+        case 0:
+        HL_initAllZeros( worldWidth, worldHeight );
+        break;
+        
+        case 1:
+        HL_initAllOnes( worldWidth, worldHeight );
+        break;
+        
+        case 2:
+        HL_initOnesInMiddle( worldWidth, worldHeight );
+        break;
+        
+        case 3:
+        HL_initOnesAtCorners( worldWidth, worldHeight );
+        break;
+
+        case 4:
+        HL_initSpinnerAtCorner( worldWidth, worldHeight );
+        break;
+
+        case 5:
+        HL_initReplicator( worldWidth, worldHeight );
+        break;
+        
+        default:
+        printf("Pattern %u has not been implemented \n", pattern);
+        exit(-1);
+    }
 }
 
-
+// copies top and bottom real rows of g_data into host
 extern "C" void get_send_ghost_rows(unsigned int worldWidth, unsigned int worldHeight)
 {
     cudaMemcpy(g_above_row, g_data + (worldWidth), worldWidth, cudaMemcpyDeviceToHost);
     cudaMemcpy(g_below_row, g_data+(worldHeight) * worldWidth, worldWidth, cudaMemcpyDeviceToHost);
 }
 
+// copies given rows into ghost rows of device
 extern "C" void load_ghost_rows(unsigned char * next_above_row, unsigned char * next_below_row,
     unsigned int worldWidth, unsigned int worldHeight)
 {
@@ -115,22 +195,13 @@ extern "C" void load_ghost_rows(unsigned char * next_above_row, unsigned char * 
 }
 
 extern "C" void HL_kernelLaunch( unsigned char** d_data, unsigned char** d_resultData, 
-        // unsigned char * next_above_row, unsigned char * next_below_row, 
         int block_count, int thread_count, 
         unsigned int worldWidth, unsigned int worldHeight, 
         int myrank){
-    
-    // load back into device
-    // cudaMemcpy(g_data, next_above_row, worldWidth, cudaMemcpyHostToDevice);
-    // cudaMemcpy(g_data+(worldHeight + 1) * worldWidth, next_below_row, worldWidth, cudaMemcpyHostToDevice);
 
     // Call the kernel
     HL_kernel<<<block_count,thread_count>>>(*d_data, *d_resultData, worldWidth, worldHeight);
     cudaDeviceSynchronize();
-
-    //load from device to host
-    // cudaMemcpy(g_above_row, g_data + (worldWidth), worldWidth, cudaMemcpyDeviceToHost);
-    // cudaMemcpy(g_below_row, g_data+(worldHeight) * worldWidth, worldWidth, cudaMemcpyDeviceToHost);
 }
 
 

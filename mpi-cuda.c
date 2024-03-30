@@ -60,8 +60,6 @@ static inline void HL_printWorld(size_t iteration, size_t g_worldWidth, size_t g
     printf("\n\n");
 }
 
-// extern void runCudaLand( int myrank );
-
 int main(int argc, char** argv) {
 	unsigned int pattern = 0;
 	unsigned int worldSize = 0;
@@ -142,8 +140,6 @@ int main(int argc, char** argv) {
 		printf("\n[WORLD SIZE] %d x %d\n[ITERATIONS] %d\n[EXECUTION TIME] %f\n", worldSize, worldSize, iterations, t1-t0);
 		HL_printWorld(iterations, worldSize, worldSize);
 	}
-
-	// HL_printWorld(iterations, worldSize, worldSize);
 
 	// free cuda memory
 	freeCudaArrays(myrank);
